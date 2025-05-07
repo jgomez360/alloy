@@ -106,7 +106,11 @@ impl AnvilInstance {
 
 impl Drop for AnvilInstance {
     fn drop(&mut self) {
-        self.child.kill().expect("could not kill anvil");
+        let mut kill = Command::new("kill")
+            .args(["-s", "SIGINT", &self.child.id().to_string()])
+            .spawn()
+            .unwrap();
+        kill.wait().expect("could not kill anvil");
     }
 }
 
