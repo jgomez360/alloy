@@ -3,7 +3,7 @@
 use crate::NodeError;
 use alloy_hardforks::EthereumHardfork;
 use alloy_network::EthereumWallet;
-use alloy_primitives::{hex, Address, ChainId};
+use alloy_primitives::{hex, Address, ChainId, TxHash};
 use alloy_signer::Signer;
 use alloy_signer_local::LocalSigner;
 use k256::{ecdsa::SigningKey, SecretKey as K256SecretKey};
@@ -148,6 +148,7 @@ pub struct Anvil {
     ipc_path: Option<String>,
     fork: Option<String>,
     fork_block_number: Option<u64>,
+    fork_transaction_hash: Option<TxHash>,
     args: Vec<OsString>,
     timeout: Option<u64>,
     keep_stdout: bool,
@@ -240,6 +241,14 @@ impl Anvil {
     /// **Note:** if set, then this requires `fork` to be set as well
     pub const fn fork_block_number(mut self, fork_block_number: u64) -> Self {
         self.fork_block_number = Some(fork_block_number);
+        self
+    }
+
+    /// Sets the `fork-transaction-hash` which will be used in addition to [`Self::fork`].
+    ///
+    /// **Note:** if set, then this requires `fork` to be set as well
+    pub const fn fork_transaction_hash(mut self, fork_transaction_hash: TxHash) -> Self {
+        self.fork_transaction_hash = Some(fork_transaction_hash);
         self
     }
 
@@ -375,6 +384,10 @@ impl Anvil {
 
         if let Some(fork_block_number) = self.fork_block_number {
             cmd.arg("--fork-block-number").arg(fork_block_number.to_string());
+        }
+
+        if let Some(fork_transaction_hash) = self.fork_transaction_hash {
+            cmd.arg("--fork-transaction-hash").arg(fork_transaction_hash.to_string());
         }
 
         if let Some(ipc_path) = &self.ipc_path {
