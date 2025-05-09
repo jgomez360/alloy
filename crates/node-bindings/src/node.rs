@@ -65,4 +65,13 @@ pub enum NodeError {
     /// No keys available this node instance.
     #[error("no keys available in this node instance")]
     NoKeysAvailable,
+    /// HTTP error when sending the JSON‑RPC reset request.
+    #[error("http error: {0}")]
+    HttpError(reqwest::Error),
+    /// Error parsing the JSON response from Anvil.
+    #[error("failed to parse JSON response: {0}")]
+    ParseError(reqwest::Error),
+    /// An error returned by Anvil’s JSON‑RPC (e.g. bad params, forking not enabled).
+    #[error("rpc error: {0}")]
+    RpcError(String),
 }

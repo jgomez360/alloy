@@ -14,9 +14,9 @@ exclude.workspace = true
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = [
-    "-Zunstable-options",
-    "--generate-link-to-definition",
-    "--show-type-layout",
+  "-Zunstable-options",
+  "--generate-link-to-definition",
+  "--show-type-layout",
 ]
 
 [lints]
@@ -31,6 +31,7 @@ alloy-signer.workspace = true
 alloy-hardforks.workspace = true
 k256.workspace = true
 rand.workspace = true
+reqwest.workspace = true
 serde_json = { workspace = true, features = ["std"] }
 tempfile.workspace = true
 thiserror.workspace = true

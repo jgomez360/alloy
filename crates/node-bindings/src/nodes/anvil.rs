@@ -37,6 +37,7 @@ pub struct AnvilInstance {
     ipc_path: Option<String>,
     port: u16,
     chain_id: Option<ChainId>,
+    fork_url: Option<String>,
 }
 
 impl AnvilInstance {
@@ -101,6 +102,38 @@ impl AnvilInstance {
     /// Returns the [`EthereumWallet`] of this instance generated from anvil dev accounts.
     pub fn wallet(&self) -> Option<EthereumWallet> {
         self.wallet.clone()
+    }
+
+    /// Reset the running Anvil fork to a fresh state at `block_number`.
+    pub async fn reset_fork_block(&self, block_number: u64) -> Result<(), NodeError> {
+        let upstream = self.fork_url.as_ref().ok_or_else(|| {
+            NodeError::Fatal("this Anvil instance wasn’t started with `--fork`".into())
+        })?;
+
+        let body = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "anvil_reset",
+            "params": [{ "forking": { "jsonRpcUrl": upstream, "blockNumber": block_number }}]
+        });
+
+        // use the async client, which uses *this* Tokio runtime
+        let client = reqwest::Client::new();
+        let resp: serde_json::Value = client
+            .post(&self.endpoint())
+            .json(&body)
+            .send()
+            .await
+            .map_err(NodeError::HttpError)?
+            .json()
+            .await
+            .map_err(NodeError::ParseError)?;
+
+        if let Some(err) = resp.get("error") {
+            return Err(NodeError::RpcError(err.to_string()));
+        }
+
+        Ok(())
     }
 }
 
@@ -378,7 +411,7 @@ impl Anvil {
             cmd.arg("-b").arg(block_time.to_string());
         }
 
-        if let Some(fork) = self.fork {
+        if let Some(ref fork) = self.fork {
             cmd.arg("-f").arg(fork);
         }
 
@@ -475,6 +508,7 @@ impl Anvil {
             ipc_path: self.ipc_path,
             port,
             chain_id: self.chain_id.or(chain_id),
+            fork_url: self.fork,
         })
     }
 }
